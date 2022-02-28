@@ -1,0 +1,38 @@
+name: Go
+
+on:
+  push:
+    paths-ignore:
+        - "docs/**"
+  workflow_call:
+
+env:
+  IMAGE_NAME: code42software/axiomatic
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2.2.0
+        with:
+          go-version: 1.15.5
+
+      - name: Check out Source Code
+        uses: actions/checkout@v2.4.0
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Format
+        run: go fmt .
+
+      - name: Lint
+        run: |
+          go get -u golang.org/x/lint/golint
+          golint -set_exit_status ./...
+
+      - name: Errcheck
+        run: |
+          go get -u github.com/kisielk/errcheck
+          errcheck ./...
