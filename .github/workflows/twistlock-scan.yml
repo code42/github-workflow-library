@@ -1,0 +1,28 @@
+name: Twistlock Scan
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+  workflow_call:
+
+env:
+  IMAGE_NAME: code42software/github-runner
+
+jobs: 
+  twistlock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Source Code
+        uses: actions/checkout@v2.4.0
+      - name: Download the Twistlock CLI
+        run: |
+          curl -k -u ${{ secrets.TwistlockUsername }}:${{ secrets.TwistlockPassword }} --output ./twistcli ${{ secrets.TwistlockConsole }}/api/v1/util/twistcli
+          sudo chmod a+x ./twistcli
+      - name: Build Docker Image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME:${{ github.sha }}
+      - name: Scan the Image
+        run: set -o pipefail && ./twistcli images scan --details -address ${{ secrets.TwistlockConsole }} -u ${{ secrets.TwistlockUsername }} -p ${{ secrets.TwistlockPassword }} $IMAGE_NAME:${{ github.sha }} | grep -v CIS | grep "critical\|high\|important\|medium\|moderate\|low" | awk -F'|' '{ print $5 "\t" $7 }' | sort -u -k1,1
+

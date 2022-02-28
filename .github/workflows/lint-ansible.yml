@@ -1,0 +1,23 @@
+name: Lint Ansible
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_call:
+
+jobs:
+  lint-ansible:
+    runs-on: self-hosted
+    steps:
+      - name: Check out Source Code
+        uses: actions/checkout@v2
+
+      - name: Lint
+        uses: ansible/ansible-lint-action@master
+        with:
+          args: |
+            -c .ansible-lint.yml
+          # Temporary workaround for https://github.com/ansible/ansible-lint-action/issues/59
+          override-deps: |
+            rich>=9.5.1,<11.0.0

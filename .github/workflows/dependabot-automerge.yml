@@ -1,0 +1,41 @@
+name: Dependabot auto-merge
+
+on: 
+  pull_request_target:
+  workflow_call:
+
+jobs:
+  dependabot:
+    runs-on: self-hosted
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - name: checkout shared packer
+        uses: actions/checkout@v2
+        with:
+          repository: code42/packer-shared
+          ssh-key: ${{ secrets.packer_shared_deploy_key }}
+          path: packer-shared
+
+      # generate a github token
+      - name: Import Secrets
+        id: secrets
+        uses: ./packer-shared/.github/actions/vault-action
+        with:
+          url: https://secrets.code42.com
+          method: approle
+          roleId: ${{ secrets.prodRoleId }}
+          secretId: ${{ secrets.prodSecretId }}
+          secrets: |
+              /github/token token | GITHUB_TOKEN
+
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1.2.1
+        with:
+          github-token: ${{ steps.secrets.outputs.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for Dependabot PRs with "Vault Integration for Github" GH app
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{ steps.secrets.outputs.GITHUB_TOKEN }}
