@@ -11,7 +11,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Check out Source Code
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Download the Twistlock CLI
         run: |
           curl -k -u ${{ secrets.TwistlockUsername }}:${{ secrets.TwistlockPassword }} --output ./twistcli ${{ secrets.TwistlockConsole }}/api/v1/util/twistcli
