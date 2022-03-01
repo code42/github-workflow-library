@@ -8,7 +8,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Set up Go
         uses: actions/setup-go@v2.2.0
