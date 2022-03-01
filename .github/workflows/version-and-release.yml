@@ -2,6 +2,9 @@ name: Version and Create Release
 
 on:
   workflow_call:
+    secrets:
+      github_token:
+        required: true
 
 jobs:
   release:
@@ -14,12 +17,12 @@ jobs:
         id: versioner
         uses: mathieudutour/github-tag-action@v6.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.github_token }}
 
       - name: Create a GitHub release
         uses: actions/create-release@v1.1.4
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.github_token }}
         with:
           tag_name: ${{ steps.versioner.outputs.new_tag }}
           release_name: Release ${{ steps.versioner.outputs.new_tag }}
