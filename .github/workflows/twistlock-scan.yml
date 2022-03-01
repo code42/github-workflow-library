@@ -2,9 +2,18 @@ name: Twistlock Scan
 
 on:
   workflow_call:
-
-env:
-  IMAGE_NAME: code42software/github-runner
+    inputs:
+      docker_image_name:
+        required: true
+        type: string
+      TwistlockURL:
+        required: true
+        type: string
+    secrets:
+      TwistlockUsername:
+        required: true
+      TwistlockPassword:
+        required: true
 
 jobs: 
   twistlock:
@@ -12,12 +21,14 @@ jobs:
     steps:
       - name: Check out Source Code
         uses: actions/checkout@v3
+
       - name: Download the Twistlock CLI
         run: |
-          curl -k -u ${{ secrets.TwistlockUsername }}:${{ secrets.TwistlockPassword }} --output ./twistcli ${{ secrets.TwistlockConsole }}/api/v1/util/twistcli
+          curl -k -u ${{ secrets.TwistlockUsername }}:${{ secrets.TwistlockPassword }} --output ./twistcli ${{ inputs.TwistlockURL }}/api/v1/util/twistcli
           sudo chmod a+x ./twistcli
-      - name: Build Docker Image
-        run: docker build . --file Dockerfile --tag $IMAGE_NAME:${{ github.sha }}
-      - name: Scan the Image
-        run: set -o pipefail && ./twistcli images scan --details -address ${{ secrets.TwistlockConsole }} -u ${{ secrets.TwistlockUsername }} -p ${{ secrets.TwistlockPassword }} $IMAGE_NAME:${{ github.sha }} | grep -v CIS | grep "critical\|high\|important\|medium\|moderate\|low" | awk -F'|' '{ print $5 "\t" $7 }' | sort -u -k1,1
 
+      - name: Build Docker Image
+        run: docker build . --file Dockerfile --tag ${{ inputs.docker_image_name }}:${{ github.sha }}
+
+      - name: Scan the Image
+        run: set -o pipefail && ./twistcli images scan --details -address ${{ secrets.TwistlockURL }} -u ${{ secrets.TwistlockUsername }} -p ${{ secrets.TwistlockPassword }} ${{ inputs.docker_image_name }}:${{ github.sha }} | grep -v CIS | grep "critical\|high\|important\|medium\|moderate\|low" | awk -F'|' '{ print $5 "\t" $7 }' | sort -u -k1,1
