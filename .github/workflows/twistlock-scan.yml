@@ -1,11 +1,6 @@
 name: Twistlock Scan
 
 on:
-  pull_request:
-    branches:
-      - master
-    paths-ignore:
-      - 'docs/**'
   workflow_call:
 
 env:
