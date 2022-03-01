@@ -1,9 +1,6 @@
 name: Lint Dockerfile
 
 on: 
-  pull_request:
-    branches:
-      - master
   workflow_call:
 
 jobs:
@@ -11,9 +8,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Check out code  
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
 
-      - name: Run Hadolint 
+      - name: Lint Dockerfile 
         uses: hadolint/hadolint-action@v1.6.0
         with:
           dockerfile: Dockerfile

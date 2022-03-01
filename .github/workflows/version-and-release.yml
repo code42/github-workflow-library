@@ -1,19 +1,14 @@
-name: Create Release
+name: Version and Create Release
 
 on:
-  push:
-    branches:
-      - 'master'
-    paths-ignore:
-      - '.github/**'
-    workflow_call:
+  workflow_call:
 
 jobs:
   release:
     runs-on: self-hosted
     steps:
       - name: Check out Source Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Bump version and push tag
         id: versioner

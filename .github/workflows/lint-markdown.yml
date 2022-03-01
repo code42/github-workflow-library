@@ -1,9 +1,6 @@
 name: Lint Markdown
 
 on: 
-  pull_request:
-    branches:
-      - master
   workflow_call:
 
 jobs:
@@ -11,8 +8,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Check out Source Code
-        uses: actions/checkout@v2
-      - name: markdownlint-cli
+        uses: actions/checkout@v3
+
+      - name: Lint Markdown
         uses: nosborn/github-action-markdown-cli@v3.0.1
         with:
           files: .

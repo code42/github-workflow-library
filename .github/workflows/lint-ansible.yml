@@ -1,9 +1,6 @@
 name: Lint Ansible
 
 on:
-  pull_request:
-    branches:
-      - master
   workflow_call:
 
 jobs:
@@ -11,9 +8,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Check out Source Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Lint
+      - name: Lint Ansible
         uses: ansible/ansible-lint-action@master
         with:
           args: |
