@@ -1,0 +1,133 @@
+name: "Reusable workflow for Terraform Plan"
+on:
+  workflow_call:
+    inputs:
+      working_dir:
+        description: '(Terraform) Directory to execute plan against'
+        required: true
+        type: string
+      tf_version:
+        description: 'Terraform version to use'
+        required: false
+        type: string
+        default: latest
+      backend_key:
+        description: 'Path to the state file inside the S3 Bucket'
+        required: true
+        type: string
+      backend_region:
+        description: 'AWS Region of the S3 Bucket and DynamoDB Table'
+        required: true
+        type: string
+      backend_profile:
+        description: 'Name of an AWS cli profile to use'
+        required: true
+        type: string
+      tf_var_files:
+        description: 'Terraform variable definitions files (Comma seperated string eg. "defaults.tfvars, sandbox-02.tfvars")'
+        required: true
+        type: string
+    secrets:
+      backend_table:
+        description: 'DynamoDB table used for state locking'
+        required: true
+      backend_bucket:
+        description: 'S3 Bucket used to hold state files'
+        required: true
+      aws_access_key_id:
+        description: 'AWS access key associated with an IAM role of target account'
+        required: true
+      aws_secret_access_key:
+        description: 'Secret key associated with AWS access key'
+        required: true
+      aws_security_token:
+        description: 'Security token associated with our short-lived credentials'
+        required: true
+
+jobs:
+  build-plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_dir }}
+    env:
+      # Inputs
+      TF_VERSION: ${{ inputs.tf_version }}
+      BACKEND_KEY: ${{ inputs.backend_key }}
+      BACKEND_REGION: ${{ inputs.backend_region }}
+      BACKEND_PROFILE: ${{ inputs.backend_profile }}
+      TF_KEY: ${{ inputs.tf_key }}
+      TF_VAR_FILES: ${{ inputs.tf_var_files }}
+      # Secrets
+      BACKEND_BUCKET:  ${{ secrets.backend_bucket }}
+      BACKEND_TABLE: ${{ secrets.backend_table }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+      AWS_SECURITY_TOKEN: ${{ secrets.aws_security_token }}
+  
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.0.0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1.3.2
+        with:
+          terraform_version: ${{ inputs.tf_version }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1.6.1
+        with:
+          aws-access-key-id: "${{ env.AWS_ACCESS_KEY_ID }}"
+          aws-secret-access-key: "${{ env.AWS_SECRET_ACCESS_KEY }}"
+          aws-session-token: "${{ env.AWS_SECURITY_TOKEN }}"
+          aws-region: ${{ env.BACKEND_REGION }}
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt --check
+
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init -backend-config="bucket=${{ env.BACKEND_BUCKET }}" \
+            -backend-config="key=${{ env.BACKEND_KEY }}" \
+            -backend-config=encrypt=true -backend-config="region=${{ env.BACKEND_REGION }}" \
+            -backend-config="dynamodb_table=${{ env.BACKEND_TABLE }}" -backend-config="profile=${{ env.BACKEND_PROFILE }}"
+      
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: files=($(echo $TF_VAR_FILES | tr ", " "\n")); terraform plan `for file in $files; do echo "--var-file=$file"; done` --out=plan.tfplan
+
+      - name: Create PR comment with Plan output
+        uses: actions/github-script@v6.0.0
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
