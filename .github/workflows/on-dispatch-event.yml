@@ -1,0 +1,78 @@
+name: on-dispatch-event
+on:
+  workflow_call:
+    inputs:
+      ami-type:
+        required: true
+        type: string
+    secrets:
+      prodRoleId:
+        required: true
+      prodSecretId:
+        required: true
+
+jobs:
+  on-dispatch-event:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # use Vault to get GH token
+      - name: Import Secrets
+        id: secrets
+        uses: hashicorp/vault-action@v2.4.0
+        with:
+          url: https://secrets.code42.com
+          method: approle
+          roleId: ${{ secrets.prodRoleId }}
+          secretId: ${{ secrets.prodSecretId }}
+          secrets: |
+              /github/token token | GITHUB_TOKEN
+
+      # Use sed to add a pound sign to the first line of packer HCL file
+      # because no empty commits are allowed.
+      - name: edit packer HCL if repo dispatch
+        run: |
+          sed '1 s/$/\#/' packer-${{ inputs.ami-type }}.pkr.hcl > tmp.pkr.hcl;
+          mv tmp.pkr.hcl packer-${{ inputs.ami-type }}.pkr.hcl
+
+      # This should create a push event that will trigger a new AMI build
+      - name: pr if repo dispatch triggered by packer-shared release
+        if: github.event.client_payload.packer-shared-version != ''
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ steps.secrets.outputs.GITHUB_TOKEN }}
+          author: vault-integration-for-github[bot] <empower-rangers@code42.com>
+          commit-message: "Automated change triggered by packer-shared ${{ github.event.client_payload.packer-shared-version }} release"
+          branch-suffix: random
+          delete-branch: true
+          base: master
+
+      # This should create a push event that will trigger a new AMI build
+      - name: pr if repo dispatch triggered by ansible-shared release
+        if: github.event.client_payload.ansible-shared-version != ''
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ steps.secrets.outputs.GITHUB_TOKEN }}
+          author: vault-integration-for-github[bot] <empower-rangers@code42.com>
+          commit-message: "Automated change triggered by ansible-shared ${{ github.event.client_payload.ansible-shared-version }} release"
+          branch-suffix: random
+          delete-branch: true
+          base: master
+
+      # This should create a push event that will trigger a new AMI build for rocket amis
+      - name: pr if repo dispatch triggered by hashi-release-event
+        if: >-
+          github.event.client_payload.vault != '' ||
+          github.event.client_payload.consul != '' && inputs.ami-type != 'vault' ||
+          github.event.client_payload.nomad != '' && inputs.ami-type == 'nomad'
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ steps.secrets.outputs.GITHUB_TOKEN }}
+          author: vault-integration-for-github[bot] <empower-rangers@code42.com>
+          commit-message: "Automated change triggered by Hashicorp release event: ${{ toJson(github.event.client_payload) }}"
+          branch-suffix: random
+          delete-branch: true
+          base: master
