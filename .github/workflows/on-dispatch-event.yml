@@ -6,6 +6,8 @@ on:
         required: true
         type: string
     secrets:
+      vaultURL:
+        required: true
       prodRoleId:
         required: true
       prodSecretId:
@@ -24,7 +26,7 @@ jobs:
         id: secrets
         uses: hashicorp/vault-action@v2.4.0
         with:
-          url: https://secrets.code42.com
+          url: ${{ secrets.vaultURL }}
           method: approle
           roleId: ${{ secrets.prodRoleId }}
           secretId: ${{ secrets.prodSecretId }}
