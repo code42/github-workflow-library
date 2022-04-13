@@ -1,0 +1,79 @@
+name: tag-and-promote
+
+on:
+  workflow_call:
+    secrets:
+      vaultURL:
+        required: true
+      prodRoleId:
+        required: true
+      prodSecretId:
+        required: true
+
+jobs:
+  tag:
+    runs-on: self-hosted
+    outputs:
+      new_tag: ${{ steps.versioner.outputs.new_tag }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        # checkout  defaults to checking out a single ref, but we need more
+        # history to find AMIs from previous commits
+        fetch-depth: 0
+
+    # create a version tag (v1.2.3) on master.  presence of PATCH:, MINOR:, or MAJOR: in commit message
+    # will increment tag per semver rules.
+    - name: Bump version and push tag
+      id: versioner
+      uses: mathieudutour/github-tag-action@v6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        custom_release_rules: "PATCH:patch,MINOR:minor,MAJOR:major"
+        dry_run: false
+
+    - name: Create a GitHub release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.versioner.outputs.new_tag }}
+        release_name: Release ${{ steps.versioner.outputs.new_tag }}
+        body: ${{ steps.versioner.outputs.changelog }}
+
+
+  promote:
+    needs: tag
+    runs-on: self-hosted
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        # checkout  defaults to checking out a single ref, but we need more
+        # history to find AMIs from previous commits
+        fetch-depth: 0
+
+    #  # use a Vault token (from GitHub Secrets) to get AWS creds from Vault
+    - name: Import Secrets
+      id: secrets
+      uses: hashicorp/vault-action@v2.4.0
+      with:
+        url: ${{ secrets.vaultURL }}
+        method: approle
+        roleId: ${{ secrets.prodRoleId }}
+        secretId: ${{ secrets.prodSecretId }}
+        secrets: |
+            /accounts/aws/sts/amis-cicd access_key | AWS_ACCESS_KEY_ID ;
+            /accounts/aws/sts/amis-cicd secret_key | AWS_SECRET_ACCESS_KEY ;
+            /accounts/aws/sts/amis-cicd security_token | AWS_SECURITY_TOKEN ;
+
+    - name: Update aws cli
+      uses: unfor19/install-aws-cli-action@v1.0.2
+
+    - name: Promote latest amis
+      run: ./ami-promote.sh ${{ needs.tag.outputs.new_tag }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ steps.secrets.outputs.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ steps.secrets.outputs.AWS_SECRET_ACCESS_KEY }}
+        AWS_SESSION_TOKEN: ${{ steps.secrets.outputs.AWS_SECURITY_TOKEN }}
