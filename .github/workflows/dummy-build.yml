@@ -1,0 +1,10 @@
+name: Dummy build
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - run: echo "No build required"
