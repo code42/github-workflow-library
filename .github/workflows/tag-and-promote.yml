@@ -69,7 +69,7 @@ jobs:
             /accounts/aws/sts/amis-cicd security_token | AWS_SECURITY_TOKEN ;
 
     - name: Update aws cli
-      uses: unfor19/install-aws-cli-action@v1.0.2
+      uses: unfor19/install-aws-cli-action@v1.0.3
 
     - name: Promote latest amis
       run: |
