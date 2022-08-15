@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Lint Ansible
-        uses: ansible/ansible-lint-action@c37fb7b4bda2c8cb18f4942716bae9f11b0dc9bc
+        uses: ansible/ansible-lint-action@754100eb7ab06b62bf300fbda1da941fa5a89586
         with:
           args: |
             -c .ansible-lint.yml
