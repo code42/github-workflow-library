@@ -8,4 +8,4 @@ This repo is temporarily public due to limitations on resuable workflows in a pr
 
 This repo should never contain information or code that is considered private to Code42.
 
-This repo requires using pull requests and approval mechanics for all changes. 
+This repo requires using pull requests and approval mechanics for all changes.

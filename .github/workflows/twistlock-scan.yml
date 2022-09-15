@@ -15,7 +15,7 @@ on:
       TwistlockPassword:
         required: true
 
-jobs: 
+jobs:
   twistlock:
     runs-on: self-hosted
     steps:

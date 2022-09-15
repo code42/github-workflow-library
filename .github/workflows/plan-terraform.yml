@@ -64,7 +64,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
       AWS_SECURITY_TOKEN: ${{ secrets.aws_security_token }}
-  
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3.0.0
@@ -93,7 +93,7 @@ jobs:
             -backend-config="key=${{ env.BACKEND_KEY }}" \
             -backend-config=encrypt=true -backend-config="region=${{ env.BACKEND_REGION }}" \
             -backend-config="dynamodb_table=${{ env.BACKEND_TABLE }}" -backend-config="profile=${{ env.BACKEND_PROFILE }}"
-      
+
       - name: Terraform Validate
         id: validate
         run: terraform validate

@@ -1,6 +1,6 @@
 name: Dependabot auto-merge
 
-on: 
+on:
   workflow_call:
     secrets:
       gh_token:
