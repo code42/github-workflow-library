@@ -7,7 +7,7 @@ jobs:
   stale:
     runs-on: self-hosted
     steps:
-      - uses: actions/stale@v5
+      - uses: actions/stale@v6
         with:
           stale-issue-message: 'Issue is stale (no activity for 60 days). Closing in 7 days.'
           stale-pr-message: 'PR is stale (no activity for 60 days). Closing in 7 days.'
