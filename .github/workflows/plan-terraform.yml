@@ -103,7 +103,7 @@ jobs:
         run: files=($(echo $TF_VAR_FILES | tr ", " "\n")); terraform plan `for file in $files; do echo "--var-file=$file"; done` --out=plan.tfplan
 
       - name: Create PR comment with Plan output
-        uses: actions/github-script@v6.1.0
+        uses: actions/github-script@v6.3.0
         if: github.event_name == 'pull_request'
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
