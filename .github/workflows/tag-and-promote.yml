@@ -64,9 +64,9 @@ jobs:
         roleId: ${{ secrets.prodRoleId }}
         secretId: ${{ secrets.prodSecretId }}
         secrets: |
-            /accounts/aws/sts/amis-cicd access_key | AWS_ACCESS_KEY_ID ;
-            /accounts/aws/sts/amis-cicd secret_key | AWS_SECRET_ACCESS_KEY ;
-            /accounts/aws/sts/amis-cicd security_token | AWS_SECURITY_TOKEN ;
+            /accounts/aws/sts/amis-automation access_key | AWS_ACCESS_KEY_ID ;
+            /accounts/aws/sts/amis-automation secret_key | AWS_SECRET_ACCESS_KEY ;
+            /accounts/aws/sts/amis-automation security_token | AWS_SECURITY_TOKEN ;
 
     - name: Update aws cli
       uses: unfor19/install-aws-cli-action@v1.0.3
