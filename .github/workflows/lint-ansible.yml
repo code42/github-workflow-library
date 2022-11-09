@@ -8,7 +8,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Check out Source Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.1.0
 
       - name: Lint Ansible
         uses: ansible/ansible-lint-action@c37fb7b4bda2c8cb18f4942716bae9f11b0dc9bc
