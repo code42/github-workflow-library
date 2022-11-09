@@ -24,7 +24,7 @@ jobs:
       # use Vault to get GH token
       - name: Import Secrets
         id: secrets
-        uses: hashicorp/vault-action@v2.4.1
+        uses: hashicorp/vault-action@v2.4.3
         with:
           url: ${{ secrets.vaultURL }}
           method: approle
