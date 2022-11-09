@@ -17,7 +17,7 @@ jobs:
       new_tag: ${{ steps.versioner.outputs.new_tag }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3.1.0
       with:
         # checkout  defaults to checking out a single ref, but we need more
         # history to find AMIs from previous commits
@@ -48,7 +48,7 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3.1.0
       with:
         # checkout  defaults to checking out a single ref, but we need more
         # history to find AMIs from previous commits
