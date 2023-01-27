@@ -57,7 +57,7 @@ jobs:
     #  # use a Vault token (from GitHub Secrets) to get AWS creds from Vault
     - name: Import Secrets
       id: secrets
-      uses: hashicorp/vault-action@v2.4.1
+      uses: hashicorp/vault-action@v2.5.0
       with:
         url: ${{ secrets.vaultURL }}
         method: approle
